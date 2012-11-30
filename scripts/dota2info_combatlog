@@ -1,0 +1,9 @@
+#!/usr/bin/python
+from dota2info import helpers
+import json
+import sys
+
+replay = map(json.loads, sys.stdin)
+combatlogs_tr = helpers.getCombatlogsTranslated(replay)
+
+print('\n'.join(map(json.dumps, combatlogs_tr)))
