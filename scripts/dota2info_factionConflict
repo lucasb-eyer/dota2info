@@ -4,31 +4,49 @@ from dota2info import helpers
 import json
 import sys
 
-""" 
+"""
 reads .demsonraw file
 
 prints plottable data regarding damage dealt between different factions (neutrals, creeps , heroes (radiant/dire)
+illusions as own type?
 """
+
+events = []
+actors = {}
+
+def maybeAddToActorDict(actorStringId):
+    if actorStringId not in actors:
+        actors[actorStringId] = {"stringId": actorStringId}
 
 replay = map(json.loads, sys.stdin)
 combatlogs_tr = helpers.getCombatlogsTranslated(replay)
 
-interesting_events = []
+for e in combatlogs_tr:
+    #right now, only kills are delivered
+    f = e["attackername"]
+    t = e["targetname"]
 
-#for e in combatlogs_tr:
-#    if e[""]
+    #TODO: translate the string to factions
+    #output the list of all factions / subfactions (radiant, heroes, creeptypes, fortifications?) with ids so they can be easily addressed?
+    # example possible items
+    # idString=... name = lina, subfaction = heroes, faction = radiant
+    # idString=... name = whocares, subfaction = creeps, faction = neutral
+    # idString=... name = melee, subfaction = creeps, faction = neutral
+    # idString=... name = melee_mega, subfaction = creeps, faction = neutral
+    maybeAddToActorDict(f)
+    maybeAddToActorDict(t)
 
-print "{}"
+    when = e["timestamp"] #TODO: round to some discrete time measure?
+    #TODO: accumulate events into time bins if the data is too large?
 
-#output the list of all factions / subfactions (radiant, heroes, creeptypes, fortifications?) with ids so they can be easily addressed?
-# example possible items
-# idString=... name = lina, subfaction = heroes, faction = radiant
-# idString=... name = whocares, subfaction = creeps, faction = neutral
-# idString=... name = melee, subfaction = creeps, faction = neutral
-# idString=... name = melee_mega, subfaction = creeps, faction = neutral
-
-#... metainfo to the following events
+    if e["type"] == 4:
+        events.append({ "what": "kill",
+                        "when": when,
+                        "from": f,
+                        "to": t})
 
 #output actual events (when what happens to whom of what factions)
-
-#print('\n'.join(map(str, combatlogs_tr)))
+data = { "actors": actors,
+        "events": events
+       }
+print(json.dumps(data))
