@@ -16,7 +16,8 @@ actors = {}
 
 def maybeAddToActorDict(actorStringId):
     if actorStringId not in actors:
-        actors[actorStringId] = {"stringId": actorStringId}
+        actors[actorStringId] = {"stringId": actorStringId, "id": len(actors)}
+    return actors[actorStringId]["id"]
 
 replay = map(json.loads, sys.stdin)
 combatlogs_tr = helpers.getCombatlogsTranslated(replay)
@@ -33,20 +34,26 @@ for e in combatlogs_tr:
     # idString=... name = whocares, subfaction = creeps, faction = neutral
     # idString=... name = melee, subfaction = creeps, faction = neutral
     # idString=... name = melee_mega, subfaction = creeps, faction = neutral
-    maybeAddToActorDict(f)
-    maybeAddToActorDict(t)
+    fId = maybeAddToActorDict(f)
+    tId = maybeAddToActorDict(t)
 
+    #TODO: accumulate events into time bins if the data turns out to be unwieldy
     when = e["timestamp"] #TODO: round to some discrete time measure?
-    #TODO: accumulate events into time bins if the data is too large?
 
     if e["type"] == 4:
         events.append({ "what": "kill",
                         "when": when,
-                        "from": f,
-                        "to": t})
+                        "from": fId,
+                        "to": tId})
+
+actorsById = {}
+
+#so json can look up information in each event
+for stringId,v in actors.iteritems():
+    actorsById[v["id"]] = v
 
 #output actual events (when what happens to whom of what factions)
-data = { "actors": actors,
+data = { "actors": actorsById,
         "events": events
        }
 print(json.dumps(data))
