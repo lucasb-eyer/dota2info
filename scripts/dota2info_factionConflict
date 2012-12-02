@@ -3,6 +3,7 @@
 from dota2info import helpers
 import json
 import sys
+import re
 
 """
 reads .demsonraw file
@@ -16,7 +17,58 @@ actors = {}
 
 def maybeAddToActorDict(actorStringId):
     if actorStringId not in actors:
-        actors[actorStringId] = {"stringId": actorStringId, "id": len(actors)}
+        # examples:
+        #npc_dota_goodguys_melee_rax_bot
+        #npc_dota_creep_goodguys_ranged
+        #npc_dota_goodguys_fillers #the fun useless buildings standing around
+        #npc_dota_creep_badguys_melee_upgraded
+        #npc_dota_goodguys_fort #ancient
+
+        #npc_dota_neutral_black_drake
+        #npc_dota_neutral_ghost
+        # is this thing considered neutral?
+        #npc_dota_dark_troll_warlord_skeleton_warrior
+
+        # can be assigned to sides by checking gameInfo
+        #npc_dota_hero_lina
+
+        # can be identified by what they do to whom:
+        #dota_fountain #both fountains seem to be created equal
+        #npc_dota_courier #again, which one?
+
+        if "hero" in actorStringId:
+            faction = "hero" #TODO: radiant or dire from gameInfo
+            subfaction = "hero"
+            name = re.match(r"npc_dota_hero_(.*)",actorStringId).group(1)
+        elif "creep" in actorStringId:
+            subfaction = "creep"
+            groups = re.match(r"npc_dota_creep_(goodguys|badguys)_(.*)",actorStringId).groups()
+            #group(0) = whole matched string
+            #groups()[0] = first capturing group
+            faction = groups[0]
+            name = groups[1]
+        # sort out the buildings
+        elif "goodguys" in actorStringId or "badguys" in actorStringId:
+            groups = re.match(r"npc_dota_(goodguys|badguys)_(.*)",actorStringId).groups()
+            faction = groups[0]
+            subfaction = "building"
+            name = groups[1]
+        elif "neutral" in actorStringId:
+            faction = "neutral"
+            subfaction = "neutral"
+            name = re.match(r".*neutral_(.*)",actorStringId).group(1)
+        else:
+            faction = "other" #assigns couriers, fountains and some other creatures to other
+            subfaction = "other"
+            name = actorStringId
+
+        actors[actorStringId] = {
+            "stringId": actorStringId,
+            "id": len(actors),
+            "faction": faction,
+            "subfaction": subfaction,
+            "name": name
+            }
     return actors[actorStringId]["id"]
 
 replay = map(json.loads, sys.stdin)
@@ -38,11 +90,11 @@ for e in combatlogs_tr:
     tId = maybeAddToActorDict(t)
 
     #TODO: accumulate events into time bins if the data turns out to be unwieldy
-    when = e["timestamp"] #TODO: round to some discrete time measure?
+    time = e["timestamp"] #TODO: round to some discrete time measure?
 
     if e["type"] == 4:
         events.append({ "what": "kill",
-                        "when": when,
+                        "time": time,
                         "from": fId,
                         "to": tId})
 
