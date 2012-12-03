@@ -17,3 +17,20 @@ This uses either the [requests](http://docs.python-requests.org/en/latest/index.
 .demson Parser
 --------------
 To show a summary of useful information from a .demson, run summary.py or dota2info_summary (this functionality is a work in progress)
+
+Setup
+-----
+	>export DOTA2INFO_DATA=PATH/TO/DATA
+in .zshrc or .bashrc, to the directory which holds the folder hierarchy with replays and outputs
+
+make sure the folder structure is:
+	>data/replays
+	>data/output
+
+producing summaries the easy way
+--------------------------------
+	>dota2info_produceSummary.py path/to/replay.dem
+
+installing snappy
+-----------------
+	>CFLAGS=-I$VIRTUAL_ENV/include LDFLAGS=-L$VIRTUAL_ENV/lib pip install python-snappy
