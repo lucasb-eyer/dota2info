@@ -16,7 +16,7 @@ illusions as own type?
 events = []
 actors = {}
 
-def filterAndBinByTime(evts, fct_filter, fct_apply, binSize):
+def filterAndBinByTime(evts, binSize, fct_apply, fct_filter):
     #binning function by time, with the given binSize
     fct_bin = lambda evt: int(math.floor(evt["time"]/binSize))
 
@@ -132,31 +132,74 @@ preprocessedData = { "actors": actorsById,
 plotList = [] #array holding an arbitrary amount of plot data
 
 #PLOT
-plotData = {"id": "killsTotal","name": "Total Kills", "y_label": "Kills", "x_label": "Seconds"}
-data_points = filterAndBinByTime(events,
-    lambda evt: evt["what"] == "kill", #event filter function
-    lambda evt,binVal: binVal+1, #what to do to the bin in question
-    30) #binning function
+plotData = {"id": "killsTotal","type": "bar","name": "Total Kills", "y_label": "Kills", "x_label": "Seconds"}
+data_points = filterAndBinByTime(events, 30, #bin interval
+        lambda evt,binVal: binVal+1, #what to do to the bin in question
+        lambda evt: evt["what"] == "kill" #event filter function
+    )
 
 #values is a taken dict method
-plotData["data_points"] = data_points
+plotData["data"] = data_points
 plotList.append(plotData)
 
 #PLOT
 plotData = {"id": "killsTotalAcc",
+            "type": "bar",
             "name": "Total Kills Accumulated",
             "y_label": "Kills",
             "x_label": "Seconds"}
 
-data_points = filterAndBinByTime(events,
-    lambda evt: evt["what"] == "kill", #event filter function
-    lambda evt,binVal: binVal+1, #what to do to the bin in question
-    30) #binning function
+data_points = filterAndBinByTime(events, 30, #bin interval
+        lambda evt,binVal: binVal+1, #what to do to the bin in question
+        lambda evt: evt["what"] == "kill" #event filter function
+    )
+
 for i,j in enumerate(data_points):
     if i > 0:
         data_points[i][1] += data_points[i-1][1]
 
-plotData["data_points"] = data_points
+plotData["data"] = data_points
+plotList.append(plotData)
+
+#PLOT FANCY
+plotData = {"id": "killsTotalFancy",
+            "type": "multiBar",
+            "name": "Total Kills by Subfaction",
+            "y_label": "Kills",
+            "x_label": "Seconds"}
+
+data_points_creep = filterAndBinByTime(events, 30,
+        lambda evt,binVal: binVal+1,
+        lambda evt: evt["what"] == "kill" and \
+                    actorsById[evt["to"]]["subfaction"] == "creep"
+    )
+data_points_hero = filterAndBinByTime(events, 30,
+        lambda evt,binVal: binVal+1,
+        lambda evt: evt["what"] == "kill" and \
+                    actorsById[evt["to"]]["subfaction"] == "hero"
+    )
+data_points_neutral = filterAndBinByTime(events, 30,
+        lambda evt,binVal: binVal+1,
+        lambda evt: evt["what"] == "kill" and \
+                    actorsById[evt["to"]]["subfaction"] == "neutral"
+    )
+data_points_building = filterAndBinByTime(events, 30,
+        lambda evt,binVal: binVal+1,
+        lambda evt: evt["what"] == "kill" and \
+                    actorsById[evt["to"]]["subfaction"] == "building"
+    )
+data_points_other = filterAndBinByTime(events, 30,
+        lambda evt,binVal: binVal+1,
+        lambda evt: evt["what"] == "kill" and \
+                    actorsById[evt["to"]]["subfaction"] == "other"
+    )
+
+plotData["data"] =  [
+                        {"key": "Creeps", "values": data_points_creep},
+                        {"key": "Heroes", "values": data_points_hero},
+                        {"key": "Neutral", "values": data_points_neutral},
+                        {"key": "Other", "values": data_points_other},
+                    ]
 plotList.append(plotData)
 
 print(json.dumps({"plots": plotList}))

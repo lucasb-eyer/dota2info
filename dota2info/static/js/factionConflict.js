@@ -1,6 +1,9 @@
-function createPlot(id,data,name) {
-	var data = [{"key": name, "bar": true, "values": data}]
-	console.log(data)
+function createPlot(id,type,data,name) {
+	if (type == "bar") {
+		var data = [{"key": name, "values": data}]
+	} else if (type == "multiBar") {
+		var data = data
+	}
 
 	nv.addGraph(function() {
 	  var chart = nv.models.multiBarChart()

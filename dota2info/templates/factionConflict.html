@@ -11,6 +11,6 @@
 	<h1>{{plot.name}}</h1>
 	<svg></svg>
 </div>
-<script>createPlot({{plot.id|json}},{{plot.data_points|json}},{{plot.name|json}});</script>
+<script>createPlot({{plot.id|json}},{{plot.type|json}},{{plot.data|json}},{{plot.name|json}});</script>
 {% endfor %}
 {% endblock %}
