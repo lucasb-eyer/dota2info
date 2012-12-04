@@ -1,22 +1,26 @@
-nv.addGraph(function() {
-  var chart = nv.models.stackedAreaChart()
-                .x(function(d) { return d.time })
-                .y(function(d) { return 1 })
-                .clipEdge(true);
+function createPlot(id,data,name) {
+	var data = [{"key": name, "bar": true, "values": data}]
+	console.log(data)
 
-  chart.xAxis
-      .showMaxMin(false)
-      .tickFormat(function(d) { return d3.time.format('%x')(new Date(d)) });
+	nv.addGraph(function() {
+	  var chart = nv.models.multiBarChart()
+	                .x(function(d) { return d[0] })
+	                .y(function(d) { return d[1] })
+	                .clipEdge(true);
 
-  chart.yAxis
-      .tickFormat(d3.format(',.2f'));
+	  chart.xAxis
+	      .showMaxMin(false)
+	      .tickFormat(function(d) {return d3.time.format('%M:%S')(new Date(d*1000))}); //ms, not s
 
-  d3.select('#chardDeatchsAll svg')
-    .datum(data.events)
-      .transition().duration(500).call(chart);
+	  chart.yAxis
+	      .tickFormat(d3.format(',f'));
 
-  nv.utils.windowResize(chart.update);
+	  d3.select('#'+id+' svg')
+	    .datum(data)
+	    .transition().duration(500).call(chart);
 
-  return chart;
-});
+	  nv.utils.windowResize(chart.update);
+	  return chart;
+	});
+}
 

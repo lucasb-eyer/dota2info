@@ -1,12 +1,16 @@
 {% extends "base.html" %}
-{% block title %} factionConflict! {% endblock %}
+{% block title %} Faction Conflict! {% endblock %}
+
 {% block extraScripts %}
-	<script>var data = {{data}}</script>
 	<script src="{{staticDir}}/js/factionConflict.js"></script>
 {%endblock%}
 
-{% block body %} 
-<div id="chartDeathsAll">
+{% block body %}
+{% for plot in data.plots %}
+<div id="{{plot.id}}">
+	<h1>{{plot.name}}</h1>
 	<svg></svg>
 </div>
+<script>createPlot({{plot.id|json}},{{plot.data_points|json}},{{plot.name|json}});</script>
+{% endfor %}
 {% endblock %}

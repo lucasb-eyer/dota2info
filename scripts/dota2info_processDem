@@ -25,6 +25,7 @@ class Renderer():
         loader = jinja2.FileSystemLoader(self.templateDir)
         #leave the json alone, autoescape!
         self.env = jinja2.Environment(loader=loader,autoescape=False)
+        self.env.filters['json'] = json.dumps
 
     def render(self, templateName, data):
         template = self.getTemplateFile(templateName)
@@ -35,7 +36,7 @@ class Renderer():
 
     def renderToAndFromFile(self, outFilePath, templateName, inJsonFilePath):
         dataFile = open(inJsonFilePath,"r")
-        data = dataFile.read() #json data as string
+        data = json.loads(dataFile.read()) #json data as string
 
         outFile = open(outFilePath, "w")
         outFile.write(self.render(templateName, data))

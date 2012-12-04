@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from dota2info import helpers
+import math
 import json
 import sys
 import re
@@ -14,6 +15,22 @@ illusions as own type?
 
 events = []
 actors = {}
+
+def filterAndBinByTime(evts, fct_filter, fct_apply, binSize):
+    #binning function by time, with the given binSize
+    fct_bin = lambda evt: int(math.floor(evt["time"]/binSize))
+
+    maxBinIdx = fct_bin(evts[-1])
+    #this assumes the last event IS the last
+    values = [[i*binSize,0] for i in range(maxBinIdx+1)]
+
+    for e in evts:
+        if fct_filter(e):
+            binIdx = fct_bin(e)
+            binValue = values[binIdx][1]
+            values[binIdx][1] = fct_apply(e,binValue)
+
+    return values
 
 def maybeAddToActorDict(actorStringId):
     if actorStringId not in actors:
@@ -104,8 +121,42 @@ actorsById = {}
 for stringId,v in actors.iteritems():
     actorsById[v["id"]] = v
 
-#output actual events (when what happens to whom of what factions)
-data = { "actors": actorsById,
+#TODO: preprocess further, so all factions are there and
+#maybe highlight stuff we can't handle
+preprocessedData = { "actors": actorsById,
         "events": events
        }
-print(json.dumps(data))
+#########################################################
+
+#now, on to create the plot data (kills every 30 seconds and accumulated kills)
+plotList = [] #array holding an arbitrary amount of plot data
+
+#PLOT
+plotData = {"id": "killsTotal","name": "Total Kills", "y_label": "Kills", "x_label": "Seconds"}
+data_points = filterAndBinByTime(events,
+    lambda evt: evt["what"] == "kill", #event filter function
+    lambda evt,binVal: binVal+1, #what to do to the bin in question
+    30) #binning function
+
+#values is a taken dict method
+plotData["data_points"] = data_points
+plotList.append(plotData)
+
+#PLOT
+plotData = {"id": "killsTotalAcc",
+            "name": "Total Kills Accumulated",
+            "y_label": "Kills",
+            "x_label": "Seconds"}
+
+data_points = filterAndBinByTime(events,
+    lambda evt: evt["what"] == "kill", #event filter function
+    lambda evt,binVal: binVal+1, #what to do to the bin in question
+    30) #binning function
+for i,j in enumerate(data_points):
+    if i > 0:
+        data_points[i][1] += data_points[i-1][1]
+
+plotData["data_points"] = data_points
+plotList.append(plotData)
+
+print(json.dumps({"plots": plotList}))
