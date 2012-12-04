@@ -202,4 +202,30 @@ plotData["data"] =  [
                     ]
 plotList.append(plotData)
 
+#PLOT FANCY CREEPKILLS
+plotData = {"id": "killsTotalCreeps",
+            "type": "multiBar",
+            "name": "Creeps Killed by Heroes vs Anybody Else",
+            "y_label": "Kills",
+            "x_label": "Seconds"}
+
+data_points_by_hero = filterAndBinByTime(events, 30,
+        lambda evt,binVal: binVal+1,
+        lambda evt: evt["what"] == "kill" and \
+                    actorsById[evt["from"]]["subfaction"] == "hero" and \
+                    actorsById[evt["to"]]["subfaction"] == "creep"
+    )
+data_points_not_by_hero = filterAndBinByTime(events, 30,
+        lambda evt,binVal: binVal+1,
+        lambda evt: evt["what"] == "kill" and \
+                    actorsById[evt["from"]]["subfaction"] != "hero" and \
+                    actorsById[evt["to"]]["subfaction"] == "creep"
+    )
+
+plotData["data"] =  [
+                        {"key": "By Heroes", "values": data_points_by_hero},
+                        {"key": "Not by Heroes", "values": data_points_not_by_hero},
+                    ]
+plotList.append(plotData)
+
 print(json.dumps({"plots": plotList}))
